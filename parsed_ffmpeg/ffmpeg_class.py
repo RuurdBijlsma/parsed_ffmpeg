@@ -55,14 +55,11 @@ class Ffmpeg:
         self.on_stdout = on_stdout
         self.on_stderr = on_stderr
 
-    def handle_stdout(self, line: str) -> None:
-        self.stdout_buffer += line
-        if self.on_stdout is not None:
-            self.on_stdout(line)
-        self.print_stdout(line)
-
     def handle_stderr(self, line: str) -> None:
         self.stderr_buffer += line
+        if self.on_stderr is not None:
+            self.on_stderr(line)
+
         if line.startswith("Duration: "):
             reg_result = re.search(r"(\d{2}):(\d{2}):(\d{2})\.(\d{2})", line)
             if reg_result is not None:
@@ -77,10 +74,8 @@ class Ffmpeg:
             if self.on_warning:
                 self.on_warning(line)
 
-        if self.on_stderr is not None:
-            self.on_stderr(line)
-
-    def print_stdout(self, line: str) -> None:
+    def handle_stdout(self, line: str) -> None:
+        self.stdout_buffer += line
         if self.on_stdout is not None:
             self.on_stdout(line)
 
