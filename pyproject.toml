@@ -1,12 +1,16 @@
 [tool.poetry]
 name = "parsed_ffmpeg"
-version = "0.1.2"
+version = "0.1.3"
 description = "Run ffmpeg commands with nicely parsed output."
 authors = ["Ruurd Bijlsma <ruurd@bijlsma.dev>"]
+repository = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
+documentation = "https://github.com/RuurdBijlsma/parsed_ffmpeg/blob/master/README.md"
+homepage = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
+license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 
 
 [tool.poetry.group.dev.dependencies]
