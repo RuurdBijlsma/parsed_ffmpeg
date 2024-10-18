@@ -2,14 +2,16 @@
 
 ## Overview
 
-Do you already know the ffmpeg command line, and don't want to relearn some syntax of a pythonic ffmpeg wrapper? This is the package for you. Just put in an ffmpeg command and this package structures the output while it's processing.
+Do you already know the ffmpeg command line, and don't want to relearn some syntax of a pythonic ffmpeg wrapper? This is
+the package for you. Just put in an ffmpeg command and this package structures the output while it's processing.
 
-## Usage 
+## Usage
 
 The code below converts a video, and prints the percentage completion while it's working.
 
 ```python
 from parsed_ffmpeg import run_ffmpeg, FfmpegError
+
 
 async def process_video():
     try:
@@ -24,6 +26,7 @@ async def process_video():
 ```
 
 ### Example script output
+
 ```text
 We're: 8.2% there!
 We're: 45.5% there!
@@ -32,6 +35,7 @@ Done!
 ```
 
 ### Error example
+
 ```text
 ffmpeg failed with error: 
 
@@ -47,6 +51,14 @@ Error opening input file input.mp4.
 Error opening input files: No such file or directory
 ```
 
+## Installation
+
+Remember that this package does not come with an ffmpeg binary, you have to have it in path or point to it in your
+command.
+
+```shell
+pip install parsed-ffmpeg
+```
 
 ## API
 
@@ -67,7 +79,8 @@ async def run_ffmpeg(
 ## Changing ffmpeg install location
 
 Just replace the first part of your command (ffmpeg) with the path to ffmpeg.
-Example: 
+Example:
+
 ```python
 await run_ffmpeg("C:/apps/ffmpeg.exe -i input.mp4 -c:v libx264 output.mp4 -y")
 ```
