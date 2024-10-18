@@ -1,7 +1,7 @@
 import os
 from collections.abc import Callable
 
-from parsed_ffmpeg_output.ffmpeg_class import StatusUpdate, Ffmpeg
+from parsed_ffmpeg.ffmpeg_class import StatusUpdate, Ffmpeg
 
 
 class FfmpegError(Exception):

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from parsed_ffmpeg_output import run_ffmpeg, StatusUpdate, FfmpegError
+from parsed_ffmpeg import run_ffmpeg, StatusUpdate, FfmpegError
 
 
 @pytest.fixture()  # type: ignore

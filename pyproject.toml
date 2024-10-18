@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "parsed_ffmpeg_output"
+name = "parsed_ffmpeg"
 version = "0.1.0"
 description = "Run ffmpeg commands with nicely parsed output."
 authors = ["Ruurd Bijlsma <ruurd@bijlsma.dev>"]
