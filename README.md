@@ -62,6 +62,8 @@ pip install parsed-ffmpeg
 
 ## API
 
+### `run_ffmpeg`
+
 ```python
 async def run_ffmpeg(
     command: list[str] | str,
@@ -74,6 +76,23 @@ async def run_ffmpeg(
     raise_on_error: bool = True,
 ) -> None:
     ...
+```
+
+### `StatusUpdate`
+
+```python
+class StatusUpdate:
+    frame: int | None
+    fps: float | None
+    bitrate: str | None
+    total_size: int | None
+    out_time_ms: float | None
+    dup_frames: int | None
+    drop_frames: int | None
+    speed: float | None
+    progress: str | None
+    duration_ms: int | None
+    completion: float | None
 ```
 
 ## Changing ffmpeg install location
