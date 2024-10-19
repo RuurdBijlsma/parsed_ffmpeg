@@ -80,6 +80,8 @@ class Ffmpeg:
             self.on_stdout(line)
 
         key, val = line.split("=")
+        if val == "N/A":
+            return
         match key:
             case "frame":
                 self.status_update.frame = int(val)
