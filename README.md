@@ -8,6 +8,7 @@ the package for you. Just put in an ffmpeg command and this package structures t
 ## Usage
 
 The code below converts a video, and prints the percentage completion while it's working.
+This example includes optional error handling, output shown below.
 
 ```python
 from parsed_ffmpeg import run_ffmpeg, FfmpegError
@@ -51,6 +52,26 @@ Error opening input file input.mp4.
 Error opening input files: No such file or directory
 ```
 
+### Example: run with tqdm to get a progressbar
+
+If you install the tqdm extra dependency (`pip install parsed-ffmpeg[tqdm]`), you can do the following:
+
+```python
+input_video = Path(__file__).parent.parent / "tests/assets/input.mp4"
+await run_ffmpeg(
+    f"ffmpeg -i {input_video} -vf scale=-1:1440 -c:v libx264 output.mp4",
+    print_progress_bar=True,
+    progress_bar_description=input_video.name,
+    overwrite_output=True,
+)
+```
+
+It'll give output like this:
+
+```text
+input.mp4:  73%|███████▎  | 4466/6084 [00:04<00:00, 1620.10ms/s]
+```
+
 ## Installation
 
 Remember that this package does not come with an ffmpeg binary, you have to have it in path or point to it in your
@@ -67,13 +88,15 @@ pip install parsed-ffmpeg
 ```python
 async def run_ffmpeg(
     command: list[str] | str,
-    on_status: Callable[[StatusUpdate], None] | None = None,
+    on_status: Callable[[FfmpegStatus], None] | None = None,
     on_stdout: Callable[[str], None] | None = None,
     on_stderr: Callable[[str], None] | None = None,
     on_error: Callable[[list[str]], None] | None = None,
     on_warning: Callable[[str], None] | None = None,
     overwrite_output: bool = False,
     raise_on_error: bool = True,
+    print_progress_bar: bool = False,
+    progress_bar_description: str | None = None,
 ) -> None:
     ...
 ```

@@ -1,72 +1,126 @@
-import os
+import asyncio
+import re
+from asyncio import subprocess, StreamReader
 from collections.abc import Callable
 
-from parsed_ffmpeg.ffmpeg_class import StatusUpdate, Ffmpeg
+from parsed_ffmpeg.types import FfmpegStatus
 
 
-class FfmpegError(Exception):
+async def read_stream(stream: StreamReader, callback: Callable[[str], None]) -> None:
+    while True:
+        line = await stream.readline()
+        if line:
+            callback(line.decode().strip())
+        else:
+            break
+
+
+class Ffmpeg:
+    status_update: FfmpegStatus = FfmpegStatus()
+    process: subprocess.Process
+
     def __init__(
         self,
-        err_lines: list[str],
-        full_command: list[str],
-        user_command: str | list[str],
+        command: list[str],
+        on_status: Callable[[FfmpegStatus], None] | None = None,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
+        on_error: Callable[[str], None] | None = None,
+        on_warning: Callable[[str], None] | None = None,
+        group_output: bool = True,
     ):
-        super().__init__("\n".join(err_lines))
-        self.err_lines = err_lines
-        self.full_command = full_command
-        self.user_command = user_command
+        self.command = command
+        self.group_output = group_output
+        self.stderr_buffer = ""
+        self.stdout_buffer = ""
 
-    def format_error(self) -> str:
-        if isinstance(self.user_command, list):
-            user_command = f"[{", ".join(self.user_command)}]"
-        else:
-            user_command = self.user_command
-        return (
-            f"\n\n\tUser command:\n\t\t{user_command}\n"
-            f"\tFull command:\n\t\t{" ".join(self.full_command)}\n"
-            f"\tWorking directory:\n\t\t{os.getcwd()}\n"
-            f"\n{"\n".join(self.err_lines)}"
+        self.on_status = on_status
+        self.on_error = on_error
+        self.on_warning = on_warning
+
+        self.on_stdout = on_stdout
+        self.on_stderr = on_stderr
+
+    def handle_stderr(self, line: str) -> None:
+        self.stderr_buffer += line
+        if self.on_stderr is not None:
+            self.on_stderr(line)
+
+        if line.startswith("Duration: "):
+            reg_result = re.search(r"(\d{2}):(\d{2}):(\d{2})\.(\d{2})", line)
+            if reg_result is not None:
+                h, m, s, ms = map(int, reg_result.groups())
+                self.status_update.duration_ms = (h * 3600 + m * 60 + s) * 1000 + ms
+
+        if "error" in line.lower():
+            if self.on_error:
+                self.on_error(line)
+
+        if "warning" in line.lower():
+            if self.on_warning:
+                self.on_warning(line)
+
+    def handle_stdout(self, line: str) -> None:
+        self.stdout_buffer += line
+        if self.on_stdout is not None:
+            self.on_stdout(line)
+
+        key, val = line.split("=")
+        if val == "N/A":
+            return
+        match key:
+            case "frame":
+                self.status_update.frame = int(val)
+            case "fps":
+                self.status_update.fps = float(val)
+            case "bitrate":
+                self.status_update.bitrate = val
+            case "total_size":
+                self.status_update.total_size = int(val)
+            case "out_time_ms":
+                self.status_update.out_time_ms = int(val) / 1000
+            case "dup_frames":
+                self.status_update.dup_frames = int(val)
+            case "drop_frames":
+                self.status_update.drop_frames = int(val)
+            case "speed":
+                self.status_update.speed = float(val[:-1])
+            case "progress":
+                self.status_update.progress = val
+            case _:
+                return
+
+        if (
+            self.on_status is not None
+            and self.status_update.progress
+            and (key == "progress" or not self.group_output)
+        ):
+            if self.status_update.duration_ms and self.status_update.out_time_ms:
+                raw_progress = (
+                    self.status_update.out_time_ms / self.status_update.duration_ms
+                )
+                self.status_update.completion = max(0.0, min(1.0, raw_progress))
+            self.on_status(self.status_update)
+
+    async def start(self) -> None:
+        self.process = await asyncio.create_subprocess_exec(
+            *self.command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
+        stdout_task: asyncio.Task[None] | None = None
+        stderr_task: asyncio.Task[None] | None = None
+        if self.process.stdout:
+            stdout_task = asyncio.create_task(
+                read_stream(self.process.stdout, self.handle_stdout)
+            )
+        if self.process.stderr:
+            stderr_task = asyncio.create_task(
+                read_stream(self.process.stderr, self.handle_stderr)
+            )
 
-    def __str__(self) -> str:
-        return self.format_error()
-
-
-async def run_ffmpeg(
-    command: list[str] | str,
-    on_status: Callable[[StatusUpdate], None] | None = None,
-    on_stdout: Callable[[str], None] | None = None,
-    on_stderr: Callable[[str], None] | None = None,
-    on_error: Callable[[list[str]], None] | None = None,
-    on_warning: Callable[[str], None] | None = None,
-    overwrite_output: bool = False,
-    raise_on_error: bool = True,
-) -> None:
-    user_command = command
-    if isinstance(command, str):
-        command = command.split(" ")
-    if overwrite_output and "-y" not in command:
-        command.append("-y")
-    if "-progress" in command:
-        raise ValueError("-progress parameter can't be in command.")
-    command += ["-progress", "pipe:1"]
-    error_lines: list[str] = []
-
-    def on_error_listener(err: str) -> None:
-        error_lines.append(err)
-
-    ffmpeg = Ffmpeg(
-        command=command,
-        on_status=on_status,
-        on_stdout=on_stdout,
-        on_stderr=on_stderr,
-        on_error=on_error_listener,
-        on_warning=on_warning,
-    )
-    await ffmpeg.start()
-    if on_error is not None and error_lines:
-        on_error(error_lines)
-    if raise_on_error and error_lines:
-        raise FfmpegError(
-            err_lines=error_lines, full_command=command, user_command=user_command
-        )
+        await self.process.wait()
+        if stdout_task:
+            await stdout_task
+        if stderr_task:
+            await stderr_task

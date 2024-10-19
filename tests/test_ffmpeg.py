@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from parsed_ffmpeg import run_ffmpeg, StatusUpdate, FfmpegError
+from parsed_ffmpeg import run_ffmpeg, FfmpegStatus, FfmpegError
 
 
 @pytest.fixture()  # type: ignore
@@ -48,7 +48,7 @@ async def test_ffmpeg_success(test_command: str) -> None:
     on_stderr_mock.assert_called()
 
     status_update_arg = on_status_mock.call_args[0][0]
-    assert isinstance(status_update_arg, StatusUpdate)
+    assert isinstance(status_update_arg, FfmpegStatus)
     assert status_update_arg.duration_ms == 6084
 
 

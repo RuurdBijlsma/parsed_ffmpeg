@@ -1,8 +1,9 @@
-from parsed_ffmpeg.ffmpeg import run_ffmpeg, FfmpegError
-from parsed_ffmpeg.ffmpeg_class import StatusUpdate
+from parsed_ffmpeg.runner import run_ffmpeg
 
 __all__ = [
     "run_ffmpeg",
     "FfmpegError",
-    "StatusUpdate",
+    "FfmpegStatus",
 ]
+
+from parsed_ffmpeg.types import FfmpegError, FfmpegStatus

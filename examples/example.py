@@ -1,3 +1,5 @@
+"""Example of ffmpeg with error handling and getting the status as it comes in."""
+
 import asyncio
 from pathlib import Path
 

@@ -12,4 +12,4 @@ repos:
     rev: '7bdd8c04a71e9a772c7d012436cbf0a03328d79b'
     hooks:
       - id: mypy
-        args: [--strict, --ignore-missing-imports]
+        args: [ --strict, --ignore-missing-imports ]
