@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -22,7 +23,7 @@ class FfmpegError(Exception):
         self,
         err_lines: list[str],
         full_command: list[str],
-        user_command: str | list[str],
+        user_command: str | list[str | Path],
     ):
         super().__init__("\n".join(err_lines))
         self.err_lines = err_lines

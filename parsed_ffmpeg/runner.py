@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 
 try:
     from tqdm import tqdm
@@ -12,7 +13,7 @@ from parsed_ffmpeg.types import FfmpegError, FfmpegStatus
 
 
 async def run_ffmpeg(
-    command: list[str] | str,
+    command: list[str | Path] | str,
     on_status: Callable[[FfmpegStatus], None] | None = None,
     on_stdout: Callable[[str], None] | None = None,
     on_stderr: Callable[[str], None] | None = None,
@@ -23,14 +24,16 @@ async def run_ffmpeg(
     print_progress_bar: bool = False,
     progress_bar_description: str | None = None,
 ) -> None:
-    user_command = command
-    if isinstance(command, str):
-        command = command.split(" ")
-    if overwrite_output and "-y" not in command:
-        command.append("-y")
-    if "-progress" in command:
+    command_list: list[str] = []
+    if isinstance(command, list):
+        command_list = [str(part) for part in command]
+    elif isinstance(command, str):
+        command_list = command.split(" ")
+    if overwrite_output and "-y" not in command_list:
+        command_list.append("-y")
+    if "-progress" in command_list:
         raise ValueError("-progress parameter can't be in command.")
-    command += ["-progress", "pipe:1"]
+    command_list += ["-progress", "pipe:1"]
     error_lines: list[str] = []
 
     def on_error_listener(err: str) -> None:
@@ -55,7 +58,7 @@ async def run_ffmpeg(
             pbar.update(int(min(status.out_time_ms, status.duration_ms) - pbar.n))
 
         ffmpeg = Ffmpeg(
-            command=command,
+            command=command_list,
             on_status=tqdm_update,
             on_stdout=on_stdout,
             on_stderr=on_stderr,
@@ -68,7 +71,7 @@ async def run_ffmpeg(
             on_error(error_lines)
         if raise_on_error and error_lines:
             raise FfmpegError(
-                err_lines=error_lines, full_command=command, user_command=user_command
+                err_lines=error_lines, full_command=command_list, user_command=command
             )
     finally:
         if pbar is not None:
