@@ -3,7 +3,7 @@
 ## Overview
 
 Do you already know the ffmpeg command line, and don't want to relearn some syntax of a pythonic ffmpeg wrapper? This is
-the package for you. Just put in an ffmpeg command and this package structures the output while it's processing.
+the package for you. Just put in an ffmpeg or ffprobe command and this package structures the output while it's processing.
 
 ## Usage
 
@@ -26,7 +26,7 @@ async def process_video():
         print(f"ffmpeg failed with error: {e}")
 ```
 
-### Example script output
+### Example output: custom status logging
 
 ```text
 We're: 8.2% there!
@@ -50,6 +50,45 @@ ffmpeg failed with error:
 [in#0 @ 00000208d2d4e1c0] Error opening input: No such file or directory
 Error opening input file input.mp4.
 Error opening input files: No such file or directory
+```
+
+### Example: Ffprobe
+
+Ffprobe output is also supported, use it like this:
+
+```python
+input_video = "input.mp4"
+result = await run_ffprobe(f"ffprobe {input_video}")
+print(str(result))
+```
+
+The ffprobe result includes this info:
+
+```json
+{
+  "bitrate_kbs": 3293,
+  "duration_ms": 6840,
+  "start_time": 0.0,
+  "streams": [
+    {
+      "bitrate_kbs": 3152,
+      "codec": "h264",
+      "details": "yuv420p(tv, smpte170m, progressive), 1280x720 [SAR 1:1 DAR 16:9], 3152 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+      "type": "video",
+      "resolution_w": 1280,
+      "resolution_h": 720,
+      "fps": 60
+    },
+    {
+      "bitrate_kbs": 128,
+      "codec": "aac",
+      "details": "48000 Hz, stereo, fltp, 128 kb/s (default)",
+      "type": "audio",
+      "sample_rate": 48000,
+      "channels": ["stereo", "fltp"]
+    }
+  ]
+}
 ```
 
 ### Example: run with tqdm to get a progressbar
@@ -116,6 +155,45 @@ class StatusUpdate:
     progress: str | None
     duration_ms: int | None
     completion: float | None
+```
+
+### `run_ffprobe`
+
+```python
+async def run_ffprobe(
+    command: list[str | Path] | str,
+    on_error: Callable[[list[str]], None] | None = None,
+    on_warning: Callable[[str], None] | None = None,
+    raise_on_error: bool = True,
+) -> FfprobeResult:
+    ...
+```
+
+### `ffprobe types`
+
+```python
+class AudioStream(BaseStream):
+    bitrate_kbs: int
+    codec: str
+    details: str
+    type: StreamType #(video or audio)
+    sample_rate: int
+    channels: list[str]
+
+class VideoStream(BaseStream):
+    bitrate_kbs: int
+    codec: str
+    details: str
+    type: StreamType #(video or audio)
+    resolution_w: int
+    resolution_h: int
+    fps: int
+
+class FfprobeResult:
+    bitrate_kbs: int
+    duration_ms: int
+    start_time: float
+    streams: list[BaseStream]
 ```
 
 ## Changing ffmpeg install location

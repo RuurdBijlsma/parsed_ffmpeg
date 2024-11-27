@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from parsed_ffmpeg import run_ffmpeg, FfmpegStatus, FfmpegError
+from parsed_ffmpeg.runner import run_ffprobe
 
 
 @pytest.fixture()  # type: ignore
@@ -11,8 +12,8 @@ def test_file() -> Path:
     return (Path(__file__).resolve().parent / "assets/input.mp4").absolute()
 
 
-@pytest.fixture()  # type: ignore
-def test_command(test_file: Path) -> list[str]:
+@pytest.fixture
+def test_ffmpeg_command(test_file: Path) -> list[str]:
     return [
         "ffmpeg",
         "-i",
@@ -25,8 +26,23 @@ def test_command(test_file: Path) -> list[str]:
     ]
 
 
+@pytest.fixture
+def test_ffprobe_command(test_file: Path) -> list[str]:
+    return [
+        "ffprobe",
+        str(test_file),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_ffprobe(test_ffprobe_command: list[str]) -> None:
+    output = await run_ffprobe(test_ffprobe_command)
+    assert output.duration_ms == 6840
+    assert len(output.streams) == 2
+
+
 @pytest.mark.asyncio  # type: ignore
-async def test_ffmpeg_success(test_command: str) -> None:
+async def test_ffmpeg_success(test_ffmpeg_command: list[str]) -> None:
     on_status_mock = MagicMock()
     on_stdout_mock = MagicMock()
     on_stderr_mock = MagicMock()
@@ -34,7 +50,7 @@ async def test_ffmpeg_success(test_command: str) -> None:
     on_warning_mock = MagicMock()
 
     await run_ffmpeg(
-        test_command,
+        test_ffmpeg_command,
         on_status=on_status_mock,
         on_stdout=on_stdout_mock,
         on_stderr=on_stderr_mock,

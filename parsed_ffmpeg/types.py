@@ -1,6 +1,41 @@
 import os
 from dataclasses import dataclass
+from enum import StrEnum, auto
 from pathlib import Path
+
+
+class StreamType(StrEnum):
+    VIDEO = auto()
+    AUDIO = auto()
+
+
+@dataclass
+class BaseStream:
+    bitrate_kbs: int
+    codec: str
+    details: str
+    type: StreamType
+
+
+@dataclass
+class AudioStream(BaseStream):
+    sample_rate: int
+    channels: list[str]
+
+
+@dataclass
+class VideoStream(BaseStream):
+    resolution_w: int
+    resolution_h: int
+    fps: int
+
+
+@dataclass
+class FfprobeResult:
+    bitrate_kbs: int
+    duration_ms: int
+    start_time: float
+    streams: list[BaseStream]
 
 
 @dataclass

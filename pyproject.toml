@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "parsed_ffmpeg"
-version = "0.2.3"
-description = "Run ffmpeg commands with nicely parsed output."
+version = "0.3.0"
+description = "Run ffmpeg and ffprobe commands with nicely parsed output."
 authors = ["Ruurd Bijlsma <ruurd@bijlsma.dev>"]
 repository = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
 documentation = "https://github.com/RuurdBijlsma/parsed_ffmpeg/blob/master/README.md"

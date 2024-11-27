@@ -28,6 +28,7 @@ async def read_stream(stream: StreamReader, callback: Callable[[str], None]) -> 
 class Ffmpeg:
     status_update: FfmpegStatus = FfmpegStatus()
     process: subprocess.Process
+    probe_mode: bool
 
     def __init__(
         self,

@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from pathlib import Path
 
+from parsed_ffmpeg.parse_ffprobe import parse_ffprobe_output
+
 try:
     from tqdm import tqdm
 except ImportError:
@@ -9,7 +11,53 @@ else:
     _has_tqdm = True
 
 from parsed_ffmpeg.ffmpeg import Ffmpeg
-from parsed_ffmpeg.types import FfmpegError, FfmpegStatus
+from parsed_ffmpeg.types import FfmpegError, FfmpegStatus, FfprobeResult
+
+
+async def run_ffprobe(
+    command: list[str | Path] | str,
+    on_error: Callable[[list[str]], None] | None = None,
+    on_warning: Callable[[str], None] | None = None,
+    raise_on_error: bool = True,
+) -> FfprobeResult:
+    command_list: list[str] = []
+    if isinstance(command, list):
+        command_list = [str(part) for part in command]
+    elif isinstance(command, str):
+        command_list = command.split(" ")
+    error_lines: list[str] = []
+    std_err_lines: list[str] = []
+
+    def on_error_listener(err: str) -> None:
+        error_lines.append(err)
+
+    def on_std_err_listener(line: str) -> None:
+        std_err_lines.append(line)
+
+    ffmpeg = Ffmpeg(
+        command=command_list,
+        on_stderr=on_std_err_listener,
+        on_error=on_error_listener,
+        on_warning=on_warning,
+    )
+    await ffmpeg.start()
+
+    if on_error is not None and error_lines:
+        on_error(error_lines)
+    if raise_on_error and error_lines:
+        raise FfmpegError(
+            err_lines=error_lines, full_command=command_list, user_command=command
+        )
+
+    result = parse_ffprobe_output("\n".join(std_err_lines))
+    if len(result.streams) == 0 and result.duration_ms == -1:
+        if raise_on_error:
+            raise FfmpegError(
+                err_lines=std_err_lines,
+                full_command=command_list,
+                user_command=command
+            )
+    return result
 
 
 async def run_ffmpeg(
@@ -23,7 +71,7 @@ async def run_ffmpeg(
     raise_on_error: bool = True,
     print_progress_bar: bool = False,
     progress_bar_description: str | None = None,
-) -> None:
+) -> str:
     command_list: list[str] = []
     if isinstance(command, list):
         command_list = [str(part) for part in command]
@@ -35,9 +83,15 @@ async def run_ffmpeg(
         raise ValueError("-progress parameter can't be in command.")
     command_list += ["-progress", "pipe:1"]
     error_lines: list[str] = []
+    std_err_lines: list[str] = []
 
     def on_error_listener(err: str) -> None:
         error_lines.append(err)
+
+    def on_std_err_listener(line: str) -> None:
+        std_err_lines.append(line)
+        if on_stderr is not None:
+            on_stderr(line)
 
     pbar: tqdm | None = None
     if print_progress_bar and not _has_tqdm:
@@ -61,7 +115,7 @@ async def run_ffmpeg(
             command=command_list,
             on_status=tqdm_update,
             on_stdout=on_stdout,
-            on_stderr=on_stderr,
+            on_stderr=on_std_err_listener,
             on_error=on_error_listener,
             on_warning=on_warning,
         )
@@ -73,6 +127,8 @@ async def run_ffmpeg(
             raise FfmpegError(
                 err_lines=error_lines, full_command=command_list, user_command=command
             )
+
+        return "\n".join(std_err_lines)
     finally:
         if pbar is not None:
             pbar.close()
