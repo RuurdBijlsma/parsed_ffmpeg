@@ -136,7 +136,7 @@ async def run_ffmpeg(
     raise_on_error: bool = True,
     print_progress_bar: bool = False,
     progress_bar_description: str | None = None,
-) -> None:
+) -> str:
     ...
 ```
 
