@@ -10,14 +10,14 @@ async def read_stream(stream: StreamReader, callback: Callable[[str], None]) -> 
     """Read stream in chunks, split chunks on newline and call callback with each line.
 
     Not using readline here because it can cause an error if the \n isn't found with a given limit."""
-    buffer = b''
+    buffer = b""
     while True:
         chunk = await stream.read(1024)  # Read in chunks of 1024 bytes
         if not chunk:
             break
         buffer += chunk
-        while b'\n' in buffer:
-            line, buffer = buffer.split(b'\n', 1)
+        while b"\n" in buffer:
+            line, buffer = buffer.split(b"\n", 1)
             callback(line.decode().strip())
 
     # Handle any remaining data in buffer
@@ -118,7 +118,7 @@ class Ffmpeg:
             *self.command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            limit=1024 * 128
+            limit=1024 * 128,
         )
         stdout_task: asyncio.Task[None] | None = None
         stderr_task: asyncio.Task[None] | None = None

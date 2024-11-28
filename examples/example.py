@@ -12,7 +12,7 @@ async def process_video() -> None:
         await run_ffmpeg(
             f"ffmpeg -i {input_video} -c:v libx264 output.mp4",
             on_status=lambda status: print(
-                f"We're: {status.completion * 100:.1f}% there!"
+                f"We're: {status.completion * 100:.1f}% there!"  # type: ignore
             ),
             overwrite_output=True,
         )

@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 from enum import StrEnum, auto
 from pathlib import Path
+from typing import Sequence
 
 
 class StreamType(StrEnum):
@@ -56,9 +57,9 @@ class FfmpegStatus:
 class FfmpegError(Exception):
     def __init__(
         self,
-        err_lines: list[str],
-        full_command: list[str],
-        user_command: str | list[str | Path],
+        err_lines: Sequence[str],
+        full_command: Sequence[str],
+        user_command: str | Sequence[str | Path],
     ):
         super().__init__("\n".join(err_lines))
         self.err_lines = err_lines
@@ -66,6 +67,7 @@ class FfmpegError(Exception):
         self.user_command = user_command
 
     def format_error(self) -> str:
+        user_command: str | Sequence[str | Path]
         if isinstance(self.user_command, list):
             user_command = (
                 f"[{", ".join([f'"{str(part)}"' for part in self.user_command])}]"

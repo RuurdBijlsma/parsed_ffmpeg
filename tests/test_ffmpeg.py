@@ -7,12 +7,12 @@ from parsed_ffmpeg import run_ffmpeg, FfmpegStatus, FfmpegError
 from parsed_ffmpeg.runner import run_ffprobe
 
 
-@pytest.fixture()  # type: ignore
+@pytest.fixture  # type: ignore
 def test_file() -> Path:
     return (Path(__file__).resolve().parent / "assets/input.mp4").absolute()
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore[misc]
 def test_ffmpeg_command(test_file: Path) -> list[str]:
     return [
         "ffmpeg",
@@ -26,7 +26,7 @@ def test_ffmpeg_command(test_file: Path) -> list[str]:
     ]
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore[misc]
 def test_ffprobe_command(test_file: Path) -> list[str]:
     return [
         "ffprobe",
@@ -34,7 +34,7 @@ def test_ffprobe_command(test_file: Path) -> list[str]:
     ]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore
 async def test_ffprobe(test_ffprobe_command: list[str]) -> None:
     output = await run_ffprobe(test_ffprobe_command)
     assert output.duration_ms == 6840

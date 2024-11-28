@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from pathlib import Path
+from typing import Sequence
 
 from parsed_ffmpeg.parse_ffprobe import parse_ffprobe_output
 
@@ -15,7 +16,7 @@ from parsed_ffmpeg.types import FfmpegError, FfmpegStatus, FfprobeResult
 
 
 async def run_ffprobe(
-    command: list[str | Path] | str,
+    command: Sequence[str | Path] | str,
     on_error: Callable[[list[str]], None] | None = None,
     on_warning: Callable[[str], None] | None = None,
     raise_on_error: bool = True,
@@ -53,15 +54,13 @@ async def run_ffprobe(
     if len(result.streams) == 0 and result.duration_ms == -1:
         if raise_on_error:
             raise FfmpegError(
-                err_lines=std_err_lines,
-                full_command=command_list,
-                user_command=command
+                err_lines=std_err_lines, full_command=command_list, user_command=command
             )
     return result
 
 
 async def run_ffmpeg(
-    command: list[str | Path] | str,
+    command: Sequence[str | Path] | str,
     on_status: Callable[[FfmpegStatus], None] | None = None,
     on_stdout: Callable[[str], None] | None = None,
     on_stderr: Callable[[str], None] | None = None,
