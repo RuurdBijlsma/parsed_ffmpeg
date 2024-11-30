@@ -70,6 +70,7 @@ async def run_ffmpeg(
     raise_on_error: bool = True,
     print_progress_bar: bool = False,
     progress_bar_description: str | None = None,
+    progress_bar_position: int | None = None,
 ) -> str:
     command_list: list[str] = []
     if isinstance(command, list):
@@ -99,7 +100,11 @@ async def run_ffmpeg(
             "Include it with `pip install parsed-ffmpeg[tqdm]`"
         )
     if print_progress_bar:
-        pbar = tqdm(desc=progress_bar_description, unit="ms")
+        pbar = tqdm(
+            desc=progress_bar_description,
+            position=progress_bar_position,
+            unit="ms"
+        )
     try:
 
         def tqdm_update(status: FfmpegStatus) -> None:
