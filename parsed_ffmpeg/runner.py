@@ -71,6 +71,7 @@ async def run_ffmpeg(
     print_progress_bar: bool = False,
     progress_bar_description: str | None = None,
     progress_bar_position: int | None = None,
+    progress_bar_leave: bool = True,
 ) -> str:
     command_list: list[str] = []
     if isinstance(command, list):
@@ -103,6 +104,7 @@ async def run_ffmpeg(
         pbar = tqdm(
             desc=progress_bar_description,
             position=progress_bar_position,
+            leave=progress_bar_leave,
             unit="ms"
         )
     try:
