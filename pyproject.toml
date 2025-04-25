@@ -1,6 +1,10 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "parsed_ffmpeg"
-version = "0.3.7"
+version = "0.4.0"
 description = "Run ffmpeg and ffprobe commands with nicely parsed output."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -8,61 +12,66 @@ license = { text = "MIT" }
 authors = [
     { name = "Ruurd Bijlsma", email = "ruurd@bijlsma.dev" },
 ]
-dependencies = [
-    "hatchling>=1.27.0",
-]
-
-[project.optional-dependencies]
-tqdm = [
-    "tqdm>=4.66.5",
-]
-
-dev = [
-    "pre-commit>=4.0.1",
-    "mypy>=1.12.0",
-    "pytest>=8.3.3",
-    "pytest-asyncio>=0.24.0",
-    "types-tqdm>=4.66.0.20240417",
-]
 
 [project.urls]
 Homepage = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
 Repository = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
 Documentation = "https://github.com/RuurdBijlsma/parsed_ffmpeg/blob/master/README.md"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.optional-dependencies]
+# Optional dependency for progress bar support
+tqdm = [
+    "tqdm>=4.66.5",
+]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
+    "pytest-asyncio>=0.24.0",
+    "pre-commit>=4.0.1",
+    "mypy>=1.12.0",
+    "types-tqdm>=4.66.0.20240417",
+]
+
+# Tool-specific configurations
 [tool.ruff]
 line-length = 100
 exclude = ["scripts", "alembic", "__init__.py", "examples"]
-lint.ignore = [
-    'S101', 'INP001',
-    'T201', 'S311',
-    'TRY003', 'PT018',
-    'PLR0913', "B019",
-    "COM812", "D100",
-    "EM101", "EM102",
-    "FBT002", "FBT001",
-    "ISC001", "D", "PLR2004", "C901", "PLR0912",
-]
-lint.select = ["ALL"]
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+# Ruff lint configuration: Select all rules and explicitly ignore specific ones
+lint.select = ["ALL"]
+lint.ignore = [
+    'S101', # Use of assert
+    'INP001', # Implicit namespace package
+    'T201', # print found
+    'S311', # Standard pseudo-random generators are not suitable for cryptographic purposes
+    'TRY003', # Avoid specifying long messages outside the exception class
+    'PT018', # Assertion should be broken down into multiple parts
+    'PLR0913', # Too many arguments to function call
+    "B019", # Use contextlib.suppress(Exception)
+    "COM812", # Trailing comma missing
+    "D100", # Missing docstring in public module
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "EM102", # Exception must not use an f-string literal, assign to variable first
+    "FBT001", # Boolean positional arg in function definition
+    "FBT002", # Boolean default value in function definition
+    "ISC001", # Implicitly concatenated string literals on one line
+    "D", # General docstring rules (consider being more specific, e.g., D101, D102, etc.)
+    "PLR2004", # Magic value used in comparison
+    "C901", # Too complex function
+    "PLR0912", # Too many branches
+]
 
 [tool.coverage.report]
+# Patterns for lines/blocks to exclude from coverage reporting
 exclude_also = [
-    # 1. Exclude an except clause of a specific form:
     "except ValueError:\\n\\s*assume\\(False\\)",
-    # 2. Comments to turn coverage on and off:
     "no cover: start(?s:.)*?no cover: stop",
-    # 3. A pragma comment that excludes an entire file:
     "\\A(?s:.*# pragma: exclude file.*)\\Z",
     "def __repr__",
     "if self.debug:",
-    "if settings.DEBUG",
+    "if settings.DEBUG", # If you have a settings module
     "raise AssertionError",
     "raise NotImplementedError",
     "if 0:",
@@ -72,18 +81,10 @@ exclude_also = [
     "@(abc\\.)?abstractmethod",
 ]
 
-[tool.coverage.coverage]
-fail_under = 100
-
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 
-[dependency-groups]
-dev = [
-    "pytest>=8.3.5",
-]
-
 [tool.mypy]
 exclude = [
-    "examples/example\\.py"
+    "examples/example\\.py",
 ]

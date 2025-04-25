@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum, auto
 from pathlib import Path
 
@@ -7,35 +7,48 @@ from pathlib import Path
 class StreamType(StrEnum):
     VIDEO = auto()
     AUDIO = auto()
+    DATA = auto()
+    UNKNOWN = auto()
 
 
 @dataclass
 class BaseStream:
-    bitrate_kbs: int
+    stream_id: str
     codec: str
-    details: str
     type: StreamType
+    details: str
+    bitrate_kbs: int | None = None
 
 
 @dataclass
 class AudioStream(BaseStream):
-    sample_rate: int
-    channels: list[str]
+    type: StreamType = field(default=StreamType.AUDIO, init=False)
+    sample_rate: int | None = None
+    num_channels: int | None = None
+    channel_layout_str: str | None = None
 
 
 @dataclass
 class VideoStream(BaseStream):
-    resolution_w: int
-    resolution_h: int
-    fps: int
+    type: StreamType = field(default=StreamType.VIDEO, init=False)
+    resolution_w: int | None = None
+    resolution_h: int | None = None
+    fps: float | None = None
+
+
+@dataclass
+class DataStream(BaseStream):
+    type: StreamType = field(default=StreamType.DATA, init=False)
 
 
 @dataclass
 class FfprobeResult:
-    bitrate_kbs: int
-    duration_ms: int
-    start_time: float
-    streams: list[BaseStream]
+    duration_ms: int | None = None
+    start_time: float | None = None
+    bitrate_kbs: int | None = None
+    streams: list[BaseStream] = field(default_factory=list)
+    format_name: str | None = None
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
