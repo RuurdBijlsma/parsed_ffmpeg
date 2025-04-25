@@ -18,6 +18,7 @@ class BaseStream:
     type: StreamType
     details: str
     bitrate_kbs: int | None = None
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

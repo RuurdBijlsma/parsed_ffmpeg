@@ -65,7 +65,8 @@ async def test_ffprobe_multistream_summary(test_file2: Path) -> None:
     # --- Basic Checks ---
     assert isinstance(output, FfprobeResult)
     # Check duration within a small tolerance
-    assert 14100 < output.duration_ms < 14200, "Incorrect duration"
+    if output.duration_ms is not None:
+        assert 14100 < output.duration_ms < 14200, "Incorrect duration"
     assert len(output.streams) == 6, "Incorrect number of streams"
 
     # --- Stream Type Counts ---

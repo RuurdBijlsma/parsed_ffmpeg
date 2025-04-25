@@ -64,13 +64,13 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
     Parses the text output of ffprobe into an FfprobeResult object.
     """
     result = FfprobeResult()
-    current_stream: Optional[BaseStream] = None  # Correct type hint
+    current_stream: BaseStream | None = None  # Correct type hint
     in_input_metadata = False
 
     lines = output.splitlines()
 
-    for i, line in enumerate(lines):
-        line = line.strip()
+    for i, raw_line in enumerate(lines):
+        line = raw_line.strip()
         if not line:
             continue
 
@@ -82,8 +82,8 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
             continue
 
         # --- Duration/Start/Bitrate ---
-        duration_match = re.search(
-            r"Duration:\s*([\d:.]+),\s*start:\s*([\d.]+),\s*bitrate:\s*(\d+\s*k?b/s|N/A)",  # Allow kb/s or b/s
+        duration_match = re.search(  # Allow kb/s or b/s
+            r"Duration:\s*([\d:.]+),\s*start:\s*([\d.]+),\s*bitrate:\s*(\d+\s*k?b/s|N/A)",
             line,
             re.IGNORECASE,
         )
@@ -100,17 +100,19 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
 
         # --- Metadata Sections ---
         if line.lower() == "metadata:":
-            if any(l.strip().startswith("Input #") for l in lines[max(0, i - 2) : i]):
+            if any(line.strip().startswith("Input #") for line in lines[max(0, i - 2) : i]):
                 in_input_metadata = True
             elif current_stream:  # Check if we just processed a stream line
-                # Heuristic: If the previous non-empty line was a Stream line, this is stream metadata
+                # Heuristic: If the previous non-empty line was a Stream line,
+                # this is stream metadata
                 prev_line_idx = i - 1
                 while prev_line_idx >= 0 and not lines[prev_line_idx].strip():
                     prev_line_idx -= 1
                 if prev_line_idx >= 0 and lines[prev_line_idx].strip().startswith("Stream #"):
                     in_input_metadata = False  # It's stream metadata
                 else:
-                    # Could still be input metadata if it appears after duration but before first stream
+                    # Could still be input metadata
+                    # if it appears after duration but before first stream
                     in_input_metadata = True
 
             else:  # Likely input metadata if before any streams
@@ -131,12 +133,10 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
             if in_input_metadata:
                 result.metadata[key] = value
             elif current_stream:
-                # Add to stream metadata if needed (requires adding a metadata dict to streams)
-                # if not hasattr(current_stream, 'metadata'):
-                #     current_stream.metadata = {}
-                # current_stream.metadata[key] = value
-                pass  # Currently ignoring stream metadata
-            continue  # Processed this line
+                if not hasattr(current_stream, "metadata"):
+                    current_stream.metadata = {}
+                current_stream.metadata[key] = value
+            continue
 
         # --- Stream Definition ---
         stream_match = re.match(
@@ -162,12 +162,14 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
             if bitrate_search:
                 stream_bitrate_str = bitrate_search.group(1)
 
+            parsed_bitrate = _parse_bitrate(stream_bitrate_str if stream_bitrate_str else "")
+
             # Base info common to all streams THAT ARE ACCEPTED BY BaseStream.__init__
             base_stream_init_args = {
                 "stream_id": stream_id,
-                "codec": codec,  # Will be refined below
+                "codec": codec,
                 "details": stream_details_raw,
-                "bitrate_kbs": _parse_bitrate(stream_bitrate_str),
+                "bitrate_kbs": parsed_bitrate,
             }
             # The 'type' field is handled differently depending on the final class
 
@@ -184,7 +186,7 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
                         video_match.groups()
                     )
                     current_stream = VideoStream(
-                        **base_stream_init_args,  # Unpack args *without* 'type'
+                        **base_stream_init_args,  # type: ignore[arg-type]
                         resolution_w=_try_int(w),
                         resolution_h=_try_int(h),
                         fps=_try_float(fps),
@@ -197,7 +199,7 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
 
                 else:
                     # Fallback if regex fails
-                    current_stream = VideoStream(**base_stream_init_args)
+                    current_stream = VideoStream(**base_stream_init_args)  # type: ignore[arg-type]
 
             # --- Audio Stream Parsing ---
             elif stream_type == StreamType.AUDIO:
@@ -221,7 +223,7 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
                         num_channels = 2
 
                     current_stream = AudioStream(
-                        **base_stream_init_args,  # Unpack args *without* 'type'
+                        **base_stream_init_args,  # type: ignore[arg-type]
                         sample_rate=_try_int(sample_rate_str),
                         num_channels=num_channels,
                         channel_layout_str=channels_str.strip(),
@@ -234,7 +236,7 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
 
                 else:
                     # Fallback if regex fails
-                    current_stream = AudioStream(**base_stream_init_args)
+                    current_stream = AudioStream(**base_stream_init_args)  # type: ignore[arg-type]
 
             # --- Data Stream Parsing ---
             elif stream_type == StreamType.DATA:
@@ -243,9 +245,7 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
                 )
                 if data_match:
                     codec, specific_bitrate_str = data_match.groups()
-                    current_stream = DataStream(
-                        **base_stream_init_args
-                    )  # Unpack args *without* 'type'
+                    current_stream = DataStream(**base_stream_init_args)  # type: ignore[arg-type]
                     current_stream.codec = codec
                     # Override bitrate if found specifically in data details
                     specific_bitrate = _parse_bitrate(specific_bitrate_str)
@@ -255,14 +255,14 @@ def parse_ffprobe_output(output: str) -> FfprobeResult:
                     elif current_stream.bitrate_kbs is None:
                         current_stream.bitrate_kbs = 0  # Default data bitrate to 0 if not found
                 else:
-                    current_stream = DataStream(**base_stream_init_args)
+                    current_stream = DataStream(**base_stream_init_args)  # type: ignore[arg-type]
                     if current_stream.bitrate_kbs is None:
                         current_stream.bitrate_kbs = 0
 
             # --- Unknown Stream Type ---
             else:
                 # For BaseStream, we *do* need to provide the type
-                current_stream = BaseStream(**base_stream_init_args, type=stream_type)
+                current_stream = BaseStream(**base_stream_init_args, type=stream_type)  # type: ignore[arg-type]
 
             if current_stream:
                 result.streams.append(current_stream)
