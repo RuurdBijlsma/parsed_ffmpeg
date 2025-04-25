@@ -1,31 +1,89 @@
-[tool.poetry]
+[project]
 name = "parsed_ffmpeg"
 version = "0.3.7"
 description = "Run ffmpeg and ffprobe commands with nicely parsed output."
-authors = ["Ruurd Bijlsma <ruurd@bijlsma.dev>"]
-repository = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
-documentation = "https://github.com/RuurdBijlsma/parsed_ffmpeg/blob/master/README.md"
-homepage = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
-license = "MIT"
 readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Ruurd Bijlsma", email = "ruurd@bijlsma.dev" },
+]
+dependencies = [
+    "hatchling>=1.27.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-tqdm = { version = "^4.66.5", optional = true }
+[project.optional-dependencies]
+tqdm = [
+    "tqdm>=4.66.5",
+]
 
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^4.0.1"
-mypy = "^1.12.0"
-pytest-asyncio = "^0.24.0"
-pytest = "^8.3.3"
-types-tqdm = { version = "^4.66.0.20240417", optional = true }
+dev = [
+    "pre-commit>=4.0.1",
+    "mypy>=1.12.0",
+    "pytest>=8.3.3",
+    "pytest-asyncio>=0.24.0",
+    "types-tqdm>=4.66.0.20240417",
+]
 
-[tool.poetry.extras]
-tqdm = ["tqdm", "types-tqdm"]
+[project.urls]
+Homepage = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
+Repository = "https://github.com/RuurdBijlsma/parsed_ffmpeg"
+Documentation = "https://github.com/RuurdBijlsma/parsed_ffmpeg/blob/master/README.md"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+exclude = ["scripts", "alembic", "__init__.py", "examples"]
+lint.ignore = [
+    'S101', 'INP001',
+    'T201', 'S311',
+    'TRY003', 'PT018',
+    'PLR0913', "B019",
+    "COM812", "D100",
+    "EM101", "EM102",
+    "FBT002", "FBT001",
+    "ISC001", "D", "PLR2004", "C901", "PLR0912",
+]
+lint.select = ["ALL"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.coverage.report]
+exclude_also = [
+    # 1. Exclude an except clause of a specific form:
+    "except ValueError:\\n\\s*assume\\(False\\)",
+    # 2. Comments to turn coverage on and off:
+    "no cover: start(?s:.)*?no cover: stop",
+    # 3. A pragma comment that excludes an entire file:
+    "\\A(?s:.*# pragma: exclude file.*)\\Z",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.coverage]
+fail_under = 100
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
+
+[tool.mypy]
+exclude = [
+    "examples/example\\.py"
+]

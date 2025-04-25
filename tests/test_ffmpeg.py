@@ -3,11 +3,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from parsed_ffmpeg import run_ffmpeg, FfmpegStatus, FfmpegError
+from parsed_ffmpeg import FfmpegError, FfmpegStatus, run_ffmpeg
 from parsed_ffmpeg.runner import run_ffprobe
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture  # type: ignore[misc]
 def test_file() -> Path:
     return (Path(__file__).resolve().parent / "assets/input.mp4").absolute()
 
@@ -34,14 +34,14 @@ def test_ffprobe_command(test_file: Path) -> list[str]:
     ]
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio  # type: ignore[misc]
 async def test_ffprobe(test_ffprobe_command: list[str]) -> None:
     output = await run_ffprobe(test_ffprobe_command)
     assert output.duration_ms == 6840
     assert len(output.streams) == 2
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio  # type: ignore[misc]
 async def test_ffmpeg_success(test_ffmpeg_command: list[str]) -> None:
     on_status_mock = MagicMock()
     on_stdout_mock = MagicMock()
@@ -68,7 +68,7 @@ async def test_ffmpeg_success(test_ffmpeg_command: list[str]) -> None:
     assert status_update_arg.duration_ms == 6084
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio  # type: ignore[misc]
 async def test_ffmpeg_err() -> None:
     on_error_mock = MagicMock()
 

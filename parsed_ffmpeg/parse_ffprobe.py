@@ -1,11 +1,11 @@
 import re
 
 from parsed_ffmpeg.types import (
-    BaseStream,
-    VideoStream,
-    StreamType,
     AudioStream,
+    BaseStream,
     FfprobeResult,
+    StreamType,
+    VideoStream,
 )
 
 
@@ -39,9 +39,7 @@ def parse_ffprobe_output(ffprobe_output: str) -> FfprobeResult:
         stream_details = stream_match.group(4)
         if stream_type == "Video":
             # Extract additional video information
-            video_details_match = re.search(
-                r"(\d+x\d+).*?, (\d+) kb/s, (\d+) fps", stream_details
-            )
+            video_details_match = re.search(r"(\d+x\d+).*?, (\d+) kb/s, (\d+) fps", stream_details)
             if video_details_match:
                 stream_resolution = video_details_match.group(1).split("x")
                 stream_bitrate = int(video_details_match.group(2))
@@ -59,9 +57,7 @@ def parse_ffprobe_output(ffprobe_output: str) -> FfprobeResult:
                 )
         elif stream_type == "Audio":
             # Extract additional audio information
-            audio_details_match = re.search(
-                r"(\d+) Hz, (.+?), (\d+) kb/s", stream_details
-            )
+            audio_details_match = re.search(r"(\d+) Hz, (.+?), (\d+) kb/s", stream_details)
             if audio_details_match:
                 stream_sample_rate = int(audio_details_match.group(1))
                 stream_channels = audio_details_match.group(2).split(", ")

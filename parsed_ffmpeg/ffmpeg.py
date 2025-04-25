@@ -1,6 +1,6 @@
 import asyncio
 import re
-from asyncio import subprocess, StreamReader
+from asyncio import StreamReader, subprocess
 from collections.abc import Callable
 
 from parsed_ffmpeg.types import FfmpegStatus
@@ -9,7 +9,8 @@ from parsed_ffmpeg.types import FfmpegStatus
 async def read_stream(stream: StreamReader, callback: Callable[[str], None]) -> None:
     """Read stream in chunks, split chunks on newline and call callback with each line.
 
-    Not using readline here because it can cause an error if the \n isn't found with a given limit."""
+    Not using readline here because it can cause an error if the \n isn't found with a given limit.
+    """
     buffer = b""
     while True:
         chunk = await stream.read(1024)  # Read in chunks of 1024 bytes
@@ -39,7 +40,7 @@ class Ffmpeg:
         on_error: Callable[[str], None] | None = None,
         on_warning: Callable[[str], None] | None = None,
         group_output: bool = True,
-    ):
+    ) -> None:
         self.command = command
         self.group_output = group_output
         self.stderr_buffer = ""
@@ -63,13 +64,11 @@ class Ffmpeg:
                 h, m, s, ms = map(int, reg_result.groups())
                 self.status_update.duration_ms = (h * 3600 + m * 60 + s) * 1000 + ms
 
-        if "error" in line.lower():
-            if self.on_error:
-                self.on_error(line)
+        if "error" in line.lower() and self.on_error:
+            self.on_error(line)
 
-        if "warning" in line.lower():
-            if self.on_warning:
-                self.on_warning(line)
+        if "warning" in line.lower() and self.on_warning:
+            self.on_warning(line)
 
     def handle_stdout(self, line: str) -> None:
         self.stdout_buffer += line
@@ -107,9 +106,7 @@ class Ffmpeg:
             and (key == "progress" or not self.group_output)
         ):
             if self.status_update.duration_ms and self.status_update.out_time_ms:
-                raw_progress = (
-                    self.status_update.out_time_ms / self.status_update.duration_ms
-                )
+                raw_progress = self.status_update.out_time_ms / self.status_update.duration_ms
                 self.status_update.completion = max(0.0, min(1.0, raw_progress))
             self.on_status(self.status_update)
 
@@ -123,13 +120,9 @@ class Ffmpeg:
         stdout_task: asyncio.Task[None] | None = None
         stderr_task: asyncio.Task[None] | None = None
         if self.process.stdout:
-            stdout_task = asyncio.create_task(
-                read_stream(self.process.stdout, self.handle_stdout)
-            )
+            stdout_task = asyncio.create_task(read_stream(self.process.stdout, self.handle_stdout))
         if self.process.stderr:
-            stderr_task = asyncio.create_task(
-                read_stream(self.process.stderr, self.handle_stderr)
-            )
+            stderr_task = asyncio.create_task(read_stream(self.process.stderr, self.handle_stderr))
 
         await self.process.wait()
         if stdout_task:

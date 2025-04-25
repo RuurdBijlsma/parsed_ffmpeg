@@ -1,8 +1,7 @@
-import os
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum, auto
 from pathlib import Path
-from typing import Sequence
 
 
 class StreamType(StrEnum):
@@ -60,7 +59,7 @@ class FfmpegError(Exception):
         err_lines: Sequence[str],
         full_command: Sequence[str],
         user_command: str | Sequence[str | Path],
-    ):
+    ) -> None:
         super().__init__("\n".join(err_lines))
         self.err_lines = err_lines
         self.full_command = full_command
@@ -69,15 +68,13 @@ class FfmpegError(Exception):
     def format_error(self) -> str:
         user_command: str | Sequence[str | Path]
         if isinstance(self.user_command, list):
-            user_command = (
-                f"[{", ".join([f'"{str(part)}"' for part in self.user_command])}]"
-            )
+            user_command = f"[{", ".join([f'"{part!s}"' for part in self.user_command])}]"
         else:
             user_command = self.user_command
         return (
             f"\n\n\tUser command:\n\t\t{user_command}\n"
             f"\tExecuted command:\n\t\t{" ".join([str(part) for part in self.full_command])}\n"
-            f"\tWorking directory:\n\t\t{os.getcwd()}\n"
+            f"\tWorking directory:\n\t\t{Path.cwd()}\n"
             f"\n{"\n".join(self.err_lines)}"
         )
 
