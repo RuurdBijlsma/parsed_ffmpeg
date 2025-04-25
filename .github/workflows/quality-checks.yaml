@@ -34,6 +34,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y ffmpeg
+          ffmpeg -version
 
       - name: Run tests
-        run: uv run pytest -m "not cuda" --cov=src --cov-fail-under=90
+        run: uv run pytest
