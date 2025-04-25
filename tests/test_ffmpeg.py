@@ -4,7 +4,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from parsed_ffmpeg import FfmpegError, FfmpegStatus, run_ffmpeg, FfprobeResult, StreamType, VideoStream, AudioStream
+from parsed_ffmpeg import (
+    AudioStream,
+    FfmpegError,
+    FfmpegStatus,
+    FfprobeResult,
+    StreamType,
+    VideoStream,
+    run_ffmpeg,
+)
 from parsed_ffmpeg.runner import run_ffprobe
 
 
@@ -45,6 +53,7 @@ async def test_ffprobe(test_ffprobe_command: list[str]) -> None:
     output = await run_ffprobe(test_ffprobe_command)
     assert output.duration_ms == 6840
     assert len(output.streams) == 2
+
 
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_ffprobe_multistream_summary(test_file2: Path) -> None:
