@@ -1,5 +1,6 @@
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Never
 
 from parsed_ffmpeg.parse_ffprobe import parse_ffprobe_output
 
@@ -88,7 +89,7 @@ async def run_ffmpeg(
         if on_stderr is not None:
             on_stderr(line)
 
-    pbar: tqdm | None = None
+    pbar: tqdm[Never] | None = None
     if print_progress_bar and not _has_tqdm:
         raise ImportError(
             "tqdm is not included in your installation of parsed-ffmpeg, "

@@ -4,21 +4,29 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from parsed_ffmpeg import FfmpegError, FfmpegStatus, run_ffmpeg, FfprobeResult, StreamType, VideoStream, AudioStream
+from parsed_ffmpeg import (
+    AudioStream,
+    FfmpegError,
+    FfmpegStatus,
+    FfprobeResult,
+    StreamType,
+    VideoStream,
+    run_ffmpeg,
+)
 from parsed_ffmpeg.runner import run_ffprobe
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def test_file() -> Path:
     return (Path(__file__).resolve().parent / "assets/input.mp4").absolute()
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def test_file2() -> Path:
     return (Path(__file__).resolve().parent / "assets/multi-stream.mov").absolute()
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def test_ffmpeg_command(test_file: Path) -> list[str]:
     return [
         "ffmpeg",
@@ -32,7 +40,7 @@ def test_ffmpeg_command(test_file: Path) -> list[str]:
     ]
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def test_ffprobe_command(test_file: Path) -> list[str]:
     return [
         "ffprobe",
@@ -40,13 +48,14 @@ def test_ffprobe_command(test_file: Path) -> list[str]:
     ]
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_ffprobe(test_ffprobe_command: list[str]) -> None:
     output = await run_ffprobe(test_ffprobe_command)
     assert output.duration_ms == 6840
     assert len(output.streams) == 2
 
-@pytest.mark.asyncio  # type: ignore[misc]
+
+@pytest.mark.asyncio
 async def test_ffprobe_multistream_summary(test_file2: Path) -> None:
     """
     Tests high-level parsing of ffprobe output for a multi-stream MOV file.
@@ -56,7 +65,8 @@ async def test_ffprobe_multistream_summary(test_file2: Path) -> None:
     # --- Basic Checks ---
     assert isinstance(output, FfprobeResult)
     # Check duration within a small tolerance
-    assert 14100 < output.duration_ms < 14200, "Incorrect duration"
+    if output.duration_ms is not None:
+        assert 14100 < output.duration_ms < 14200, "Incorrect duration"
     assert len(output.streams) == 6, "Incorrect number of streams"
 
     # --- Stream Type Counts ---
@@ -76,7 +86,7 @@ async def test_ffprobe_multistream_summary(test_file2: Path) -> None:
     assert audio_stream.sample_rate == 48000, "Audio sample rate mismatch"
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_ffmpeg_success(test_ffmpeg_command: list[str]) -> None:
     on_status_mock = MagicMock()
     on_stdout_mock = MagicMock()
@@ -103,7 +113,7 @@ async def test_ffmpeg_success(test_ffmpeg_command: list[str]) -> None:
     assert status_update_arg.duration_ms == 6084
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_ffmpeg_err() -> None:
     on_error_mock = MagicMock()
 

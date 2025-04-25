@@ -18,6 +18,7 @@ class BaseStream:
     type: StreamType
     details: str
     bitrate_kbs: int | None = None
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -81,14 +82,14 @@ class FfmpegError(Exception):
     def format_error(self) -> str:
         user_command: str | Sequence[str | Path]
         if isinstance(self.user_command, list):
-            user_command = f"[{", ".join([f'"{part!s}"' for part in self.user_command])}]"
+            user_command = f"[{', '.join([f'"{part!s}"' for part in self.user_command])}]"
         else:
             user_command = self.user_command
         return (
             f"\n\n\tUser command:\n\t\t{user_command}\n"
-            f"\tExecuted command:\n\t\t{" ".join([str(part) for part in self.full_command])}\n"
+            f"\tExecuted command:\n\t\t{' '.join([str(part) for part in self.full_command])}\n"
             f"\tWorking directory:\n\t\t{Path.cwd()}\n"
-            f"\n{"\n".join(self.err_lines)}"
+            f"\n{'\n'.join(self.err_lines)}"
         )
 
     def __str__(self) -> str:
