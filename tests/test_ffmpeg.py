@@ -1,15 +1,21 @@
+from collections import Counter
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
-from parsed_ffmpeg import FfmpegError, FfmpegStatus, run_ffmpeg
+from parsed_ffmpeg import FfmpegError, FfmpegStatus, run_ffmpeg, FfprobeResult, StreamType, VideoStream, AudioStream
 from parsed_ffmpeg.runner import run_ffprobe
 
 
 @pytest.fixture  # type: ignore[misc]
 def test_file() -> Path:
     return (Path(__file__).resolve().parent / "assets/input.mp4").absolute()
+
+
+@pytest.fixture  # type: ignore[misc]
+def test_file2() -> Path:
+    return (Path(__file__).resolve().parent / "assets/multi-stream.mov").absolute()
 
 
 @pytest.fixture  # type: ignore[misc]
@@ -39,6 +45,35 @@ async def test_ffprobe(test_ffprobe_command: list[str]) -> None:
     output = await run_ffprobe(test_ffprobe_command)
     assert output.duration_ms == 6840
     assert len(output.streams) == 2
+
+@pytest.mark.asyncio  # type: ignore[misc]
+async def test_ffprobe_multistream_summary(test_file2: Path) -> None:
+    """
+    Tests high-level parsing of ffprobe output for a multi-stream MOV file.
+    """
+    output: FfprobeResult = await run_ffprobe(["ffprobe", "-hide_banner", str(test_file2)])
+
+    # --- Basic Checks ---
+    assert isinstance(output, FfprobeResult)
+    # Check duration within a small tolerance
+    assert 14100 < output.duration_ms < 14200, "Incorrect duration"
+    assert len(output.streams) == 6, "Incorrect number of streams"
+
+    # --- Stream Type Counts ---
+    stream_types = Counter(s.type for s in output.streams)
+    assert stream_types[StreamType.VIDEO] == 1, "Should have 1 video stream"
+    assert stream_types[StreamType.AUDIO] == 4, "Should have 4 audio streams"
+    assert stream_types[StreamType.DATA] == 1, "Should have 1 data stream"
+
+    # --- Minimal Data Verification (find first video/audio) ---
+    video_stream = next((s for s in output.streams if isinstance(s, VideoStream)), None)
+    audio_stream = next((s for s in output.streams if isinstance(s, AudioStream)), None)
+
+    assert video_stream is not None, "Video stream not found"
+    assert video_stream.resolution_w == 1920, "Video width mismatch"
+
+    assert audio_stream is not None, "Audio stream not found"
+    assert audio_stream.sample_rate == 48000, "Audio sample rate mismatch"
 
 
 @pytest.mark.asyncio  # type: ignore[misc]
