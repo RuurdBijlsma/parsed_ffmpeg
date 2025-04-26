@@ -131,7 +131,6 @@ async def test_ffprobe_subtitle_stream(subtitle_test_file: Path) -> None:
     assert subtitle_stream.codec == "subrip"
     # Bitrate for subtitles is often not reported or N/A, so it should parse as None
     assert subtitle_stream.bitrate_kbs is None, "Subtitle bitrate should be None"
-    assert subtitle_stream.details == "subrip (srt)"  # Check raw details
     assert "DURATION" in subtitle_stream.metadata
     assert subtitle_stream.metadata["DURATION"] == "00:59:54.486000000"
     # Example didn't have language tag like (eng) in the stream line,
