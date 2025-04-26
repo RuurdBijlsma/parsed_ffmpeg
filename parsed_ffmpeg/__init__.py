@@ -2,14 +2,16 @@ from parsed_ffmpeg.runner import run_ffmpeg, run_ffprobe
 
 __all__ = [
     "run_ffmpeg",
+    "run_ffprobe",
     "FfmpegError",
     "FfmpegStatus",
-    "run_ffprobe",
     "FfprobeResult",
     "StreamType",
     "VideoStream",
     "AudioStream",
     "BaseStream",
+    "SubtitleStream",
+    "DataStream",
 ]
 
 from parsed_ffmpeg.types import (
@@ -20,4 +22,6 @@ from parsed_ffmpeg.types import (
     BaseStream,
     VideoStream,
     AudioStream,
+    SubtitleStream,
+    DataStream
 )

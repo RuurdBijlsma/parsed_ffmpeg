@@ -58,14 +58,24 @@ class Ffmpeg:
         if self.on_stderr is not None:
             self.on_stderr(line)
 
+        # Use the more robust regex and calculation for Duration
         if line.startswith("Duration: "):
-            reg_result = re.search(r"(\d{2}):(\d{2}):(\d{2})\.(\d{2})", line)
+            # Match HH:MM:SS.ms+ (one or more digits for ms)
+            reg_result = re.search(r"(\d{2}):(\d{2}):(\d{2})\.(\d+)", line)
             if reg_result is not None:
-                h, m, s, ms = map(int, reg_result.groups())
-                self.status_update.duration_ms = (h * 3600 + m * 60 + s) * 1000 + ms
+                h, m, s, ms_part = reg_result.groups()  # Capture the raw ms part string
+                h, m, s = map(int, (h, m, s))  # Convert H, M, S to int
+                # Correctly calculate milliseconds (pad/truncate to 3 digits)
+                ms = int(str(ms_part).ljust(3, "0")[:3])
+                # Only update if not already set, or consider if FFmpeg might refine it later
+                # For now, let's assume the first Duration found is the definitive input duration.
+                if self.status_update.duration_ms is None:
+                    self.status_update.duration_ms = (h * 3600 + m * 60 + s) * 1000 + ms
 
+        # Keep error/warning handling
         if "error" in line.lower() and self.on_error:
-            self.on_error(line)
+            # Consider collecting multiple error lines before calling?
+            self.on_error(line)  # Maybe pass a list later if needed
 
         if "warning" in line.lower() and self.on_warning:
             self.on_warning(line)
