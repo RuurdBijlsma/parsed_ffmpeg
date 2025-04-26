@@ -8,6 +8,7 @@ class StreamType(StrEnum):
     VIDEO = auto()
     AUDIO = auto()
     DATA = auto()
+    SUBTITLE = auto()
     UNKNOWN = auto()
 
 
@@ -40,6 +41,11 @@ class VideoStream(BaseStream):
 @dataclass
 class DataStream(BaseStream):
     type: StreamType = field(default=StreamType.DATA, init=False)
+
+
+@dataclass
+class SubtitleStream(BaseStream):
+    type: StreamType = field(default=StreamType.SUBTITLE, init=False)
 
 
 @dataclass
